@@ -20,7 +20,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetch("/api/projects")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : []))
       .then(setProjects)
       .finally(() => setLoading(false));
   }, []);

@@ -24,9 +24,9 @@ export default function ResultsPage() {
   const [data, setData] = useState<StatusResponse | null>(null);
 
   useEffect(() => {
-    fetch(`/api/projects/${id}/status`).then((r) => r.json()).then(setData);
+    fetch(`/api/projects/${id}/status`).then((r) => r.ok ? r.json() : null).then((d) => d && setData(d));
     const interval = setInterval(() => {
-      fetch(`/api/projects/${id}/status`).then((r) => r.json()).then(setData);
+      fetch(`/api/projects/${id}/status`).then((r) => r.ok ? r.json() : null).then((d) => d && setData(d));
     }, 3000);
     return () => clearInterval(interval);
   }, [id]);
