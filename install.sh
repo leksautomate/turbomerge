@@ -178,7 +178,7 @@ install_app() {
   ok "Prisma client generated"
 
   step "Running database migrations"
-  npx prisma migrate deploy
+  npx prisma db push --accept-data-loss
   ok "Migrations applied"
 
   step "Building Next.js app"
