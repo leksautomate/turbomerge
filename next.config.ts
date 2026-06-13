@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ["archiver", "pg-boss", "mime-types", "@prisma/adapter-pg"],
 };
 
 export default nextConfig;
