@@ -207,7 +207,7 @@ EOF
   pm2 delete turbobatch-web turbobatch-worker 2>/dev/null || true
   pm2 start "$INSTALL_DIR/ecosystem.config.js"
   pm2 save
-  pm2 startup systemd -u root --hp /root | tail -1 | bash
+  pm2 startup systemd -u root --hp /root 2>&1 | grep "^sudo " | bash || true
   ok "PM2 configured — app starts automatically on reboot"
 }
 
