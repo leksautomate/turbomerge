@@ -65,4 +65,6 @@ model Job {
   project              Project   @relation(fields: [project_id], references: [id], onDelete: Cascade)
 
   @@map("jobs")
+  @@index([project_id])
+  @@index([project_id, status])
 }
