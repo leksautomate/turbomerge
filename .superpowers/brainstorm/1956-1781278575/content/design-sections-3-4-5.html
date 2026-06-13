@@ -1,0 +1,97 @@
+<h2>TurboBatch — Full Design</h2>
+<p class="subtitle">Sections 3–5: Queue &amp; Worker · API Routes · Frontend UI</p>
+
+<div class="section">
+  <div class="label">Section 3 — Queue &amp; Worker</div>
+  <div style="font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2">
+    <span style="color:#4ade80">// worker/index.ts — starts with: npm run worker</span><br>
+    const boss = new PgBoss(DATABASE_URL)<br>
+    await boss.start()<br>
+    await boss.work('image-job', { teamSize: 5 }, imageWorker)<br>
+    await boss.work('video-job', { teamSize: 2 }, videoWorker)<br><br>
+    <span style="color:#4ade80">// image-worker.ts</span><br>
+    if (job.data.provider === 'runware') → providers/runware.ts<br>
+    if (job.data.provider === 'vertex')&nbsp; → providers/vertex-image.ts<br>
+    → download image → uploads/images/:projectId/:index.png<br>
+    → UPDATE jobs SET status='completed', output_path=…<br>
+    → UPDATE projects SET completed_jobs += 1<br><br>
+    <span style="color:#4ade80">// video-worker.ts — long-running, polls Vertex AI</span><br>
+    → POST to Vertex Veo → get operation_id → save to DB<br>
+    → poll every 30s → when done → download MP4<br>
+    → UPDATE jobs SET status='completed', output_path=…<br><br>
+    <span style="color:#4ade80">// Retry: pg-boss retries failed jobs up to 3x automatically</span><br>
+    <span style="color:#4ade80">// Concurrency: 5 image workers, 2 video workers in parallel</span>
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Section 4 — API Routes</div>
+  <div style="font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2">
+    POST   /api/projects&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">create project</span><br>
+    GET&nbsp;&nbsp;&nbsp; /api/projects&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">list all projects</span><br>
+    GET&nbsp;&nbsp;&nbsp; /api/projects/:id&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">project + jobs</span><br>
+    DELETE /api/projects/:id&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">delete project + files</span><br><br>
+    POST   /api/projects/:id/generate&nbsp;&nbsp;<span style="color:#94a3b8">submit prompts → enqueue jobs</span><br>
+    POST   /api/projects/:id/pause&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">pause queue</span><br>
+    POST   /api/projects/:id/resume&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">resume queue</span><br>
+    POST   /api/projects/:id/cancel&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">cancel all pending jobs</span><br>
+    POST   /api/projects/:id/retry&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">retry all failed jobs</span><br><br>
+    GET&nbsp;&nbsp;&nbsp; /api/projects/:id/status&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">polled every 2s for live progress</span><br>
+    GET&nbsp;&nbsp;&nbsp; /api/projects/:id/download&nbsp;&nbsp;<span style="color:#94a3b8">stream ZIP of all outputs</span><br><br>
+    PATCH  /api/jobs/:id&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">edit prompt on failed job</span><br>
+    POST   /api/jobs/:id/retry&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">retry single job</span>
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Section 5 — Frontend Pages</div>
+  <div style="font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2">
+    /&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">Dashboard — project cards grid</span><br>
+    /projects/new&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">Create project form (title, type, provider, settings)</span><br>
+    /projects/:id&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">Project page — prompts textarea, queue, actions</span><br>
+    /projects/:id/results <span style="color:#94a3b8">Results grid — thumbnails, failed list, download ZIP</span>
+  </div>
+  <div style="margin-top:1rem;font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:1.9">
+    <span style="color:#4ade80">Dashboard card:</span><br>
+    ┌─────────────────────────────┐<br>
+    │ Japan History Shorts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ 48 images · Runware&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ ████████████░░░ 80%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ [Open] [Download] [Delete]&nbsp;&nbsp;│<br>
+    └─────────────────────────────┘<br><br>
+    <span style="color:#4ade80">Project page:</span><br>
+    ┌─────────────────────────────┐<br>
+    │ Prompts (one per line)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ ┌──────────────────────┐&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ │ A futuristic city&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ │ A samurai at sunset&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ └──────────────────────┘&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ [Generate]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ Generating 24/100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ ████████░░░░░░░░ 24%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │ [Pause] [Cancel] [Retry ❌]&nbsp;│<br>
+    └─────────────────────────────┘
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Error Handling</div>
+  <ul style="line-height:2;margin:0;padding-left:1.25rem;font-size:0.9rem">
+    <li>pg-boss auto-retries failed jobs up to 3 times with exponential backoff</li>
+    <li>Failed jobs show error message + Edit Prompt + Retry buttons</li>
+    <li>Vertex video: if operation_id saved and server restarts, worker resumes polling on startup</li>
+    <li>Runware API errors: stored in <code>error_message</code>, surfaced in UI per job</li>
+  </ul>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Testing</div>
+  <ul style="line-height:2;margin:0;padding-left:1.25rem;font-size:0.9rem">
+    <li>Unit tests for provider modules (mock API responses)</li>
+    <li>Integration tests for API routes using a test PostgreSQL DB</li>
+    <li>Manual E2E: generate 5-image project, verify files appear on disk, download ZIP</li>
+  </ul>
+</div>
+
+<p class="subtitle" style="margin-top:1.5rem">Does the full design look right? Reply "approve" in terminal and I'll write the spec doc.</p>

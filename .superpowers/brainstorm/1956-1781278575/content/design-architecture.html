@@ -1,0 +1,52 @@
+<h2>Design: Architecture Overview</h2>
+<p class="subtitle">Section 1 of 5 — How everything fits together</p>
+
+<div class="section">
+  <div class="label">Project Structure</div>
+  <div style="font-family:monospace;font-size:0.82rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2">
+    bulk-media-generator/<br>
+    ├── app/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># Next.js pages + API routes</span><br>
+    │&nbsp;&nbsp; ├── (dashboard)/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># UI pages</span><br>
+    │&nbsp;&nbsp; └── api/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># REST endpoints</span><br>
+    ├── worker/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># Background worker process</span><br>
+    │&nbsp;&nbsp; ├── index.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># Entry point, starts pg-boss</span><br>
+    │&nbsp;&nbsp; ├── image-worker.ts&nbsp;&nbsp;<span style="color:#94a3b8"># Calls Runware API</span><br>
+    │&nbsp;&nbsp; └── video-worker.ts&nbsp;&nbsp;<span style="color:#94a3b8"># Calls Vertex AI Veo</span><br>
+    ├── lib/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># Shared code</span><br>
+    │&nbsp;&nbsp; ├── db.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># Prisma client</span><br>
+    │&nbsp;&nbsp; ├── queue.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># pg-boss instance</span><br>
+    │&nbsp;&nbsp; └── storage.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># File save/read/zip helpers</span><br>
+    ├── prisma/schema.prisma&nbsp;&nbsp;<span style="color:#94a3b8"># DB schema</span><br>
+    └── uploads/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># Generated files on disk</span><br>
+    &nbsp;&nbsp;&nbsp; ├── images/<br>
+    &nbsp;&nbsp;&nbsp; ├── videos/<br>
+    &nbsp;&nbsp;&nbsp; └── zips/
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Request Flow</div>
+  <div style="font-family:monospace;font-size:0.82rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2.2">
+    User pastes prompts → POST /api/projects/:id/generate<br>
+    &nbsp;&nbsp;→ Inserts jobs into DB<br>
+    &nbsp;&nbsp;→ Enqueues job IDs into pg-boss<br>
+    <br>
+    Worker (always running):<br>
+    &nbsp;&nbsp;pg-boss fires job → image-worker or video-worker<br>
+    &nbsp;&nbsp;→ Calls Runware / Vertex AI<br>
+    &nbsp;&nbsp;→ Downloads &amp; saves file to uploads/<br>
+    &nbsp;&nbsp;→ Updates job status in DB<br>
+    <br>
+    Frontend polls GET /api/projects/:id/status every 2s<br>
+    &nbsp;&nbsp;→ Shows live progress bar
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Dev startup (one command)</div>
+  <div style="font-family:monospace;font-size:0.85rem;background:rgba(0,0,0,0.25);padding:0.75rem;border-radius:8px">
+    npm run dev&nbsp;&nbsp;<span style="color:#94a3b8"># runs Next.js + worker concurrently</span>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:1.5rem">Does this architecture look right? Reply in terminal.</p>

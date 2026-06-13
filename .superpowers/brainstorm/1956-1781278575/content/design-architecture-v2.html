@@ -1,0 +1,68 @@
+<h2>Design: Architecture (Updated)</h2>
+<p class="subtitle">Section 1 of 5 — Multi-provider generation</p>
+
+<div class="section">
+  <div class="label">Project Structure</div>
+  <div style="font-family:monospace;font-size:0.82rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2">
+    bulk-media-generator/<br>
+    ├── app/<br>
+    │&nbsp;&nbsp; ├── (dashboard)/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># UI pages</span><br>
+    │&nbsp;&nbsp; └── api/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># REST endpoints</span><br>
+    ├── worker/<br>
+    │&nbsp;&nbsp; ├── index.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># Starts pg-boss, registers handlers</span><br>
+    │&nbsp;&nbsp; ├── image-worker.ts&nbsp;&nbsp;<span style="color:#94a3b8"># Routes to Runware or Vertex Image</span><br>
+    │&nbsp;&nbsp; ├── video-worker.ts&nbsp;&nbsp;<span style="color:#94a3b8"># Vertex AI Veo, polls operation ID</span><br>
+    │&nbsp;&nbsp; └── providers/<br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├── runware.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># openai:gpt-image@2 via Runware</span><br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├── vertex-image.ts&nbsp;<span style="color:#94a3b8"># Imagen 4 via Vertex AI</span><br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └── vertex-video.ts&nbsp;<span style="color:#94a3b8"># Veo via Vertex AI</span><br>
+    ├── lib/<br>
+    │&nbsp;&nbsp; ├── db.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># Prisma client</span><br>
+    │&nbsp;&nbsp; ├── queue.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># pg-boss instance</span><br>
+    │&nbsp;&nbsp; └── storage.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8"># File save / zip helpers</span><br>
+    ├── prisma/schema.prisma<br>
+    └── uploads/<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── images/<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── videos/<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;└── zips/
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Worker routing — image jobs</div>
+  <div style="font-family:monospace;font-size:0.82rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2.2">
+    pg-boss fires "image-job"<br>
+    &nbsp;&nbsp;→ image-worker reads job.model<br>
+    &nbsp;&nbsp;→ "runware" &nbsp;&nbsp;→ providers/runware.ts&nbsp;&nbsp;&nbsp;&nbsp;→ Runware API<br>
+    &nbsp;&nbsp;→ "vertex"&nbsp;&nbsp;&nbsp;→ providers/vertex-image.ts → Vertex Imagen 4<br>
+    &nbsp;&nbsp;→ saves file to uploads/images/:projectId/<br>
+    &nbsp;&nbsp;→ updates job: status=completed, output_path
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Worker routing — video jobs</div>
+  <div style="font-family:monospace;font-size:0.82rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2.2">
+    pg-boss fires "video-job"<br>
+    &nbsp;&nbsp;→ video-worker → providers/vertex-video.ts<br>
+    &nbsp;&nbsp;→ POST to Vertex AI → get operation_id<br>
+    &nbsp;&nbsp;→ saves operation_id to job row<br>
+    &nbsp;&nbsp;→ polls every 30s until complete<br>
+    &nbsp;&nbsp;→ downloads MP4 → uploads/videos/:projectId/<br>
+    &nbsp;&nbsp;→ updates job: status=completed
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Per-project model settings</div>
+  <div style="font-family:monospace;font-size:0.82rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:1.8">
+    <span style="color:#4ade80">// Image project — Runware</span><br>
+    { "provider": "runware", "model": "openai:gpt-image@2", "quality": "high", "format": "png" }<br><br>
+    <span style="color:#4ade80">// Image project — Vertex</span><br>
+    { "provider": "vertex", "model": "imagen-4", "aspectRatio": "16:9", "format": "png" }<br><br>
+    <span style="color:#4ade80">// Video project — Vertex Veo</span><br>
+    { "provider": "vertex", "model": "veo", "duration": 8, "resolution": "1080p", "aspectRatio": "9:16" }
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:1.5rem">Does this look right? Reply in terminal to move to Section 2 (Database schema).</p>

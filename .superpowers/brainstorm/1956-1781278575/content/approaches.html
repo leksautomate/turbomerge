@@ -1,0 +1,60 @@
+<h2>Architecture Approaches</h2>
+<p class="subtitle">Three ways to structure the bulk generation system — pick the one that fits best.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Next.js + pg-boss + Worker Script <span style="color:#4ade80;font-size:0.75rem;margin-left:8px">Recommended</span></h3>
+      <p>Next.js handles the UI and API routes. A separate <code>worker.ts</code> script runs alongside it (started with <code>concurrently</code>) and processes jobs via pg-boss. One repo, two processes, one <code>npm run dev</code>.</p>
+      <div style="margin-top:0.75rem;font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.2);padding:0.75rem;border-radius:6px;line-height:1.8">
+        Browser → Next.js API routes → PostgreSQL (pg-boss queue)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;worker.ts (always running)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Runware API &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Vertex AI Veo<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uploads/ (local disk)
+      </div>
+      <div class="pros-cons" style="margin-top:0.75rem">
+        <div class="pros"><h4>Pros</h4><ul><li>Built-in retries &amp; concurrency</li><li>Jobs survive server restarts</li><li>One repo, simple setup</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Two processes to start</li><li>pg-boss adds a dependency</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Next.js + Raw DB Polling Worker</h3>
+      <p>Skip pg-boss entirely. The worker just polls the <code>jobs</code> table every few seconds: grab a pending job, process it, mark it done. No extra library — just SQL.</p>
+      <div style="margin-top:0.75rem;font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.2);padding:0.75rem;border-radius:6px;line-height:1.8">
+        Browser → Next.js API routes → PostgreSQL (jobs table)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ poll every 3s<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;worker.ts (setInterval loop)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Runware API &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Vertex AI Veo
+      </div>
+      <div class="pros-cons" style="margin-top:0.75rem">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero extra libraries</li><li>Easiest to read &amp; debug</li><li>Full control</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Manual retry logic</li><li>Race conditions if running 2+ workers</li><li>More code to write</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Next.js Inline Processing (avoid)</h3>
+      <p>Process images/videos directly inside Next.js API route handlers — no separate worker, no queue.</p>
+      <div class="pros-cons" style="margin-top:0.75rem">
+        <div class="pros"><h4>Pros</h4><ul><li>Simplest possible setup</li><li>No extra files</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>API routes time out — kills long video jobs</li><li>Bulk of 100+ images will crash</li><li>No pause/resume/retry possible</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:1.5rem">Click your preferred approach, or tell me in the terminal.</p>

@@ -1,0 +1,44 @@
+<h2>Bulk AI Media Generator</h2>
+<p class="subtitle">Let's design this together — a few questions, then we'll map out the full architecture.</p>
+
+<div class="section">
+  <div class="label">What we've decided so far</div>
+  <div class="cards" style="grid-template-columns: repeat(2, 1fr);">
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <h3>Image Generation</h3>
+        <p>Runware API → <code>openai:gpt-image@2</code></p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <h3>Video Generation</h3>
+        <p>Google Vertex AI → Veo</p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <h3>Queue</h3>
+        <p>pg-boss (PostgreSQL-backed)<br>No Redis needed</p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <h3>Storage</h3>
+        <p>Local disk<br><code>uploads/images/ · videos/</code></p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <h3>Users</h3>
+        <p>Single user<br>No auth for now</p>
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <div class="card-body">
+        <h3>Stack</h3>
+        <p>Next.js · PostgreSQL<br>TailwindCSS · ShadCN</p>
+      </div>
+    </div>
+  </div>
+</div>

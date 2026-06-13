@@ -1,0 +1,89 @@
+<h2>TurboBatch — Final Design</h2>
+<p class="subtitle">Updated with aspect ratio support + correct Vertex API models</p>
+
+<div class="section">
+  <div class="label">Aspect Ratio — per project setting</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:0.5rem">
+    <div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:1rem;text-align:center">
+      <div style="width:60px;height:60px;border:2px solid #4ade80;border-radius:4px;margin:0 auto 0.5rem"></div>
+      <div style="font-weight:600">1:1</div>
+      <div style="font-size:0.75rem;color:#94a3b8">Social / Profile<br>1024×1024</div>
+    </div>
+    <div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:1rem;text-align:center">
+      <div style="width:80px;height:45px;border:2px solid #4ade80;border-radius:4px;margin:0 auto 0.5rem"></div>
+      <div style="font-weight:600">16:9</div>
+      <div style="font-size:0.75rem;color:#94a3b8">YouTube / Landscape<br>1536×864</div>
+    </div>
+    <div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:1rem;text-align:center">
+      <div style="width:45px;height:80px;border:2px solid #4ade80;border-radius:4px;margin:0 auto 0.5rem"></div>
+      <div style="font-weight:600">9:16</div>
+      <div style="font-size:0.75rem;color:#94a3b8">TikTok / Reels<br>864×1536</div>
+    </div>
+  </div>
+  <p style="margin-top:0.75rem;font-size:0.85rem;color:#94a3b8">Set once per project. All jobs inherit it. Works for both images and videos.</p>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">How each provider handles aspect ratio</div>
+  <div style="font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2">
+    <span style="color:#4ade80">Runware (openai:gpt-image@2)</span><br>
+    aspectRatio "1:1"  → width: 1024, height: 1024<br>
+    aspectRatio "16:9" → width: 1536, height: 864<br>
+    aspectRatio "9:16" → width: 864,&nbsp; height: 1536<br><br>
+    <span style="color:#4ade80">Vertex Image (gemini-3.1-flash-image-preview / gemini-3-pro-image-preview)</span><br>
+    imageConfig.aspectRatio = "1:1" | "16:9" | "9:16"<br>
+    endpoint: aiplatform.googleapis.com/v1/publishers/google/models/:model:streamGenerateContent<br><br>
+    <span style="color:#4ade80">Vertex Video (veo-3.1-lite-generate-001)</span><br>
+    config.aspect_ratio = "1:1" | "16:9" | "9:16"<br>
+    config.duration_seconds = 8, config.resolution = "720p" | "1080p"<br>
+    client.models.generate_videos() → operation → poll until done
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Updated project settings schema</div>
+  <div style="font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:1.9">
+    <span style="color:#4ade80">// Runware image project</span><br>
+    { "provider": "runware", "model": "openai:gpt-image@2",<br>
+    &nbsp;&nbsp;"aspectRatio": "16:9", "quality": "high", "format": "png" }<br><br>
+    <span style="color:#4ade80">// Vertex image project</span><br>
+    { "provider": "vertex", "model": "gemini-3.1-flash-image-preview",<br>
+    &nbsp;&nbsp;"aspectRatio": "9:16", "format": "png" }<br><br>
+    <span style="color:#4ade80">// Vertex video project</span><br>
+    { "provider": "vertex", "model": "veo-3.1-lite-generate-001",<br>
+    &nbsp;&nbsp;"aspectRatio": "16:9", "duration": 8, "resolution": "1080p" }
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">New Project form — what the user fills in</div>
+  <div style="font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:2">
+    Project Title:&nbsp;&nbsp;&nbsp; [Japan History Shorts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+    Media Type:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ( ) Image&nbsp;&nbsp; ( ) Video<br>
+    Provider:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ( ) Runware&nbsp;&nbsp;( ) Vertex<br>
+    Aspect Ratio:&nbsp;&nbsp;&nbsp;&nbsp; ( ) 1:1&nbsp;&nbsp;&nbsp;&nbsp; ( ) 16:9&nbsp;&nbsp; ( ) 9:16<br>
+    ── if Image ────────────────────────────────<br>
+    Format:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ( ) PNG&nbsp;&nbsp;&nbsp;&nbsp; ( ) JPG<br>
+    Quality:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ( ) Low&nbsp;&nbsp;&nbsp;&nbsp; ( ) Medium&nbsp;( ) High<br>
+    ── if Vertex Image ─────────────────────────<br>
+    Model:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ( ) Flash&nbsp;&nbsp;&nbsp;( ) Pro<br>
+    ── if Video ────────────────────────────────<br>
+    Duration:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [8] seconds<br>
+    Resolution:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ( ) 720p&nbsp;&nbsp;&nbsp;&nbsp;( ) 1080p<br>
+    [Create Project]
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="label">Aspect ratio helper (lib/aspect-ratio.ts)</div>
+  <div style="font-family:monospace;font-size:0.8rem;background:rgba(0,0,0,0.25);padding:1rem;border-radius:8px;line-height:1.9">
+    <span style="color:#94a3b8">// Maps aspect ratio string → pixel dimensions for Runware</span><br>
+    const RUNWARE_DIMENSIONS = {<br>
+    &nbsp;&nbsp;"1:1":  { width: 1024, height: 1024 },<br>
+    &nbsp;&nbsp;"16:9": { width: 1536, height: 864  },<br>
+    &nbsp;&nbsp;"9:16": { width: 864,  height: 1536 },<br>
+    }
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:1.5rem">Reply "approve" in terminal to write the full spec doc and kick off implementation planning.</p>

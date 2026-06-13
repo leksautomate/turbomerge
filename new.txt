@@ -1,0 +1,537 @@
+Your message looks incomplete ("for this automation we are going to be using..."), but based on what you've described, here's a solid architecture for a Bulk AI Media Generator that supports both images and videos.
+
+Core Features
+Input
+
+Users paste prompts like:
+
+A futuristic Tokyo street at night
+
+A medieval castle in the mountains
+
+A cyberpunk samurai portrait
+
+A dragon flying over New York
+
+Each line = 1 generation job.
+
+Supported Media
+Images
+Generate 1 image per prompt
+PNG
+JPG
+JPEG
+Optional custom naming
+Videos
+
+Using Google Vertex AI video generation.
+
+Generate 1 video per prompt
+MP4 output
+Configurable duration
+720p / 1080p
+Optional aspect ratio
+Queue System
+
+Each prompt becomes a job.
+
+Pending
+Generating
+Completed
+Failed
+Paused
+Cancelled
+
+Database table:
+
+jobs
+-----
+id
+user_id
+prompt
+type (image/video)
+status
+progress
+output_url
+error_message
+created_at
+User Actions
+Pause
+
+Stops queue processing.
+
+[Pause Queue]
+Resume
+
+Continue remaining jobs.
+
+[Resume Queue]
+Stop / Cancel
+
+Cancels all pending jobs.
+
+[Cancel Queue]
+Retry Failed
+Retry All Failed
+Retry Single Item
+Edit Failed Prompt
+
+Example:
+
+Original:
+A dragon fly over city
+
+Edit:
+A giant dragon flying over New York City
+
+Then:
+
+Retry
+Progress Tracking
+
+Show:
+
+Generating 24/100
+
+████████░░░░░░░░ 24%
+
+For video:
+
+Video 12/50
+Rendering...
+72%
+Bulk Download
+Images
+
+Generate ZIP:
+
+images.zip
+
+Contains:
+
+1.png
+2.png
+3.png
+4.png
+
+or
+
+1.jpg
+2.jpg
+3.jpg
+Videos
+
+Generate ZIP:
+
+videos.zip
+
+Contains:
+
+1.mp4
+2.mp4
+3.mp4
+Mixed Export
+exports.zip
+
+1.png
+2.png
+3.mp4
+4.mp4
+Folder Structure
+uploads/
+├── jobs/
+│
+├── images/
+│   ├── 1.png
+│   ├── 2.png
+│
+├── videos/
+│   ├── 1.mp4
+│   ├── 2.mp4
+│
+└── zip/
+    ├── images.zip
+    ├── videos.zip
+Frontend UI
++-----------------------------------+
+| Bulk Media Generator              |
++-----------------------------------+
+
+Media Type:
+(o) Images
+(o) Videos
+
+Prompts:
+
+A futuristic city
+
+A cyberpunk samurai
+
+A dragon flying over NYC
+
+-------------------------------------
+
+[Generate]
+
+Queue
+
+✓ Completed
+⏳ Generating
+❌ Failed
+
+Actions
+
+[Pause]
+[Resume]
+[Retry Failed]
+[Download All]
+Recommended Tech Stack
+Frontend
+Next.js
+React
+TailwindCSS
+ShadCN UI
+Backend
+Node.js
+NestJS or Express
+PostgreSQL
+Queue
+BullMQ
+Redis
+
+This is critical because generating 100–1000 images/videos synchronously will crash a normal API.
+
+Generation Workers
+Image Worker
+Prompt
+ ↓
+Queue
+ ↓
+Worker
+ ↓
+Image API
+ ↓
+Storage
+ ↓
+Database
+Video Worker
+Prompt
+ ↓
+Queue
+ ↓
+Vertex AI
+ ↓
+Poll Status
+ ↓
+Download Result
+ ↓
+Storage
+ ↓
+Database
+Google Vertex AI Video Flow
+Create Video Request
+      ↓
+Receive Operation ID
+      ↓
+Save Operation ID
+      ↓
+Poll Every 30 Seconds
+      ↓
+Completed
+      ↓
+Download MP4
+      ↓
+Store
+
+Store:
+
+vertex_operation_id
+
+so jobs can resume after server restarts.
+
+Scaling for Thousands of Jobs
+
+Use:
+
+API Server
+     ↓
+Redis Queue
+     ↓
+Worker #1
+Worker #2
+Worker #3
+Worker #4
+
+Each worker handles generation independently.
+
+Nice Premium Features
+Prompt Templates
+Portrait:
+{{subject}}
+
+YouTube Thumbnail:
+{{topic}}
+
+Anime Scene:
+{{description}}
+CSV Upload
+
+Upload:
+
+prompt
+A dragon flying
+A futuristic city
+A medieval knight
+
+Auto-create jobs.
+
+Bulk Aspect Ratio
+1:1
+16:9
+9:16
+4:5
+
+Apply to all prompts.
+
+Webhook Notifications
+Generation Completed
+Generation Failed
+Email Notification
+100 Videos Finished
+
+For the automation part, tell me what you're planning to use (Redis, BullMQ, Temporal, Inngest, Trigger.dev, n8n, etc.), and I can design the exact production architecture and database schema around that stack.
+
+and laos project creation  befre each shoulfd be like a project best on the proect title which is must
+
+That's a good idea. For a serious bulk generator, everything should live inside Projects, not directly under the user.
+
+Project-First Structure
+
+Before generating anything, the user must create a project.
+
+Example:
+
+Project Title:
+Japan History Shorts
+
+Media Type:
+Images
+
+Output Format:
+PNG
+
+Created:
+June 12, 2026
+Workflow
+Step 1: Create Project
+
+User enters:
+
+Project Name:
+Japan History Shorts
+
+Then clicks:
+
+Create Project
+Step 2: Add Prompts
+The Battle of Sekigahara
+
+The Last Samurai
+
+Miyamoto Musashi Duel
+
+The Fall of Osaka Castle
+
+Each line becomes a job.
+
+Step 3: Generate
+
+System creates:
+
+Project:
+Japan History Shorts
+
+Jobs:
+4
+
+Status:
+Generating
+Database Structure
+Projects Table
+projects
+--------
+id
+user_id
+title
+description
+media_type
+status
+total_jobs
+completed_jobs
+failed_jobs
+created_at
+updated_at
+
+Status:
+
+Draft
+Generating
+Paused
+Completed
+Cancelled
+Jobs Table
+jobs
+----
+id
+project_id
+prompt
+status
+output_url
+error_message
+retry_count
+created_at
+
+Each job belongs to a project.
+
+Dashboard
+Projects
+--------------------------------
+
+Japan History Shorts
+48 Images
+Completed
+
+World War 2 Documentary
+120 Videos
+Generating
+
+Football Explainers
+75 Images
+Paused
+Project Page
+
+Example:
+
+Project:
+Japan History Shorts
+
+Progress:
+42 / 50 Completed
+
+Images:
+✓ 1.png
+✓ 2.png
+✓ 3.png
+
+Failed:
+❌ 17.png
+
+Actions:
+Pause
+Resume
+Retry Failed
+Download ZIP
+Delete
+Download Structure
+
+When user downloads:
+
+Japan History Shorts.zip
+
+Inside:
+
+Japan History Shorts/
+
+1.png
+2.png
+3.png
+4.png
+5.png
+
+For videos:
+
+World War 2 Documentary/
+
+1.mp4
+2.mp4
+3.mp4
+Project Settings
+
+Every project can store:
+
+{
+  "model": "imagen-4",
+  "mediaType": "image",
+  "aspectRatio": "16:9",
+  "format": "png",
+  "negativePrompt": "",
+  "quality": "high"
+}
+
+For videos:
+
+{
+  "model": "veo",
+  "duration": 8,
+  "resolution": "1080p",
+  "aspectRatio": "9:16"
+}
+
+All jobs automatically inherit these settings.
+
+Project-Level Actions
+
+Instead of managing 500 individual jobs:
+
+Pause Project
+Resume Project
+Cancel Project
+Retry Failed
+Duplicate Project
+Export Project
+Delete Project
+Project Templates
+
+Users can duplicate successful projects.
+
+Example:
+
+YouTube History Images
+Anime Story Videos
+Sports Explainer Graphics
+TikTok Documentary Clips
+
+Click:
+
+Duplicate Project
+
+and all settings are copied.
+
+Recommended Production Flow
+User
+  ↓
+Create Project
+  ↓
+Add Prompts
+  ↓
+Save Draft
+  ↓
+Generate
+  ↓
+Queue Jobs
+  ↓
+Workers Process Jobs
+  ↓
+Store Outputs
+  ↓
+Project Progress Updates
+  ↓
+Download ZIP
+
+This project-first approach is much cleaner because a user might generate:
+
+5,000 images for a YouTube channel
+500 videos for TikTok
+200 thumbnail concepts
+
+and all assets remain organized under a project rather than becoming one huge unmanageable list.
