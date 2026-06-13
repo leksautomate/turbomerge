@@ -43,3 +43,15 @@ yarn-error.log*
 next-env.d.ts
 
 uploads/
+
+# superpowers / internal tooling
+docs/superpowers/
+.superpowers/
+
+# tests
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+/tests/
+/__tests__/

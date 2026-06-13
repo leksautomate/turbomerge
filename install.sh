@@ -129,6 +129,8 @@ collect_config() {
   IMAGE_ASPECT_RATIO=${IMAGE_ASPECT_RATIO:-16:9}
   read -rp "  Veo Model [default: veo-3.1-lite-generate-001]: " VEO_MODEL_ID
   VEO_MODEL_ID=${VEO_MODEL_ID:-veo-3.1-lite-generate-001}
+  read -rp "  App Port [default: 3000]: " APP_PORT_INPUT
+  APP_PORT=${APP_PORT_INPUT:-3000}
   read -rp "  Domain name (e.g. turbobatch.example.com, or leave blank for IP only): " DOMAIN
   echo ""
 }
@@ -146,7 +148,7 @@ IMAGE_CONCURRENCY=2
 VEO_MODEL_ID=${VEO_MODEL_ID}
 VEO_LOCATION_ID=us-central1
 NODE_ENV=production
-PORT=${APP_PORT}
+PORT=${APP_PORT:-3000}
 EOF
   ok ".env written"
 }
@@ -172,7 +174,8 @@ install_app() {
 
 setup_pm2() {
   step "Setting up PM2 process manager"
-  cat > "$INSTALL_DIR/ecosystem.config.js" <<'EOF'
+  local port="${APP_PORT:-3000}"
+  cat > "$INSTALL_DIR/ecosystem.config.js" <<EOF
 module.exports = {
   apps: [
     {
@@ -180,7 +183,7 @@ module.exports = {
       script: "node_modules/.bin/next",
       args: "start",
       cwd: "/opt/turbobatch",
-      env: { NODE_ENV: "production", PORT: 3000 },
+      env: { NODE_ENV: "production", PORT: ${port} },
       restart_delay: 3000,
       max_restarts: 10,
     },

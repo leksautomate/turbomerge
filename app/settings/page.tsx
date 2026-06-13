@@ -30,6 +30,7 @@ interface Settings {
   IMAGE_CONCURRENCY: string;
   VEO_MODEL_ID: string;
   VEO_LOCATION_ID: string;
+  PORT: string;
 }
 
 const DEFAULTS: Settings = {
@@ -42,6 +43,7 @@ const DEFAULTS: Settings = {
   IMAGE_CONCURRENCY: "2",
   VEO_MODEL_ID: "veo-3.1-lite-generate-001",
   VEO_LOCATION_ID: "us-central1",
+  PORT: "3000",
 };
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
@@ -77,16 +79,39 @@ function PasswordInput({ value, onChange, placeholder }: { value: string; onChan
   );
 }
 
+type DbStatus = "idle" | "checking" | "ok" | "error";
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dbStatus, setDbStatus] = useState<DbStatus>("idle");
+  const [dbMsg, setDbMsg] = useState("");
 
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.ok ? r.json() : {})
       .then((d) => setSettings(s => ({ ...s, ...d })));
+    // Auto-check DB on load
+    checkDb();
   }, []);
+
+  const checkDb = async () => {
+    setDbStatus("checking");
+    setDbMsg("");
+    try {
+      const r = await fetch("/api/projects");
+      if (r.ok) { setDbStatus("ok"); }
+      else {
+        const d = await r.json().catch(() => ({}));
+        setDbStatus("error");
+        setDbMsg(d.error ?? `HTTP ${r.status}`);
+      }
+    } catch {
+      setDbStatus("error");
+      setDbMsg("Could not reach server");
+    }
+  };
 
   const set = (key: keyof Settings) => (val: string) =>
     setSettings(s => ({ ...s, [key]: val }));
@@ -127,6 +152,34 @@ export default function SettingsPage() {
         {/* API Keys */}
         <Card title="API Keys">
           <div className="flex flex-col gap-4">
+            {/* DB Status */}
+            <div className="flex items-center justify-between bg-[hsl(220_15%_13%)] border border-[hsl(220_15%_18%)] rounded-lg px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-[hsl(40_15%_85%)]">Database</p>
+                <p className="text-xs text-[hsl(220_10%_50%)] mt-0.5">
+                  {dbStatus === "idle" && "Not checked yet"}
+                  {dbStatus === "checking" && "Checking connection..."}
+                  {dbStatus === "ok" && "Connected"}
+                  {dbStatus === "error" && (dbMsg || "Not connected")}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`w-2.5 h-2.5 rounded-full ${
+                  dbStatus === "ok" ? "bg-green-500" :
+                  dbStatus === "error" ? "bg-red-500" :
+                  dbStatus === "checking" ? "bg-yellow-400 animate-pulse" :
+                  "bg-[hsl(220_10%_35%)]"
+                }`} />
+                <button
+                  type="button"
+                  onClick={checkDb}
+                  className="text-xs text-[hsl(220_10%_55%)] hover:text-[hsl(40_15%_80%)] border border-[hsl(220_15%_22%)] rounded px-2.5 py-1 transition-colors"
+                >
+                  Test
+                </button>
+              </div>
+            </div>
+
             <div>
               <label className={labelCls}>Runware API Key</label>
               <PasswordInput value={settings.RUNWARE_API_KEY} onChange={set("RUNWARE_API_KEY")} placeholder="rw-..." />
@@ -153,10 +206,27 @@ export default function SettingsPage() {
               <input
                 type="text"
                 value={settings.DATABASE_URL}
-                onChange={(e) => set("DATABASE_URL")(e.target.value)}
+                onChange={(e) => { set("DATABASE_URL")(e.target.value); setDbStatus("idle"); }}
                 placeholder="postgresql://user:password@localhost:5432/turbobatch"
                 className={inputCls}
               />
+              <p className={hintCls}>PostgreSQL connection string</p>
+            </div>
+
+            <div className="border-t border-[hsl(220_15%_18%)]" />
+
+            <div>
+              <label className={labelCls}>App Port</label>
+              <input
+                type="number"
+                min={1024}
+                max={65535}
+                value={settings.PORT}
+                onChange={(e) => set("PORT")(e.target.value)}
+                placeholder="3000"
+                className="w-32 bg-[hsl(220_15%_13%)] border border-[hsl(220_15%_18%)] rounded-lg px-3 py-2 text-sm text-[hsl(40_15%_90%)] focus:outline-none focus:border-[hsl(38_55%_55%)]"
+              />
+              <p className={hintCls}>Port the web server listens on. Restart the server after changing.</p>
             </div>
           </div>
         </Card>

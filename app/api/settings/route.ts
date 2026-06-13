@@ -14,6 +14,7 @@ const KNOWN_KEYS = [
   "IMAGE_CONCURRENCY",
   "VEO_MODEL_ID",
   "VEO_LOCATION_ID",
+  "PORT",
 ];
 
 function parseEnv(content: string): Record<string, string> {
