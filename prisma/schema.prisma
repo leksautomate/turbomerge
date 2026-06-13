@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum Provider {
+  RUNWARE
+  VERTEX
+}
+
+enum ProjectStatus {
+  DRAFT
+  GENERATING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum JobStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Project {
+  id             String        @id @default(uuid())
+  title          String
+  description    String?
+  media_type     MediaType
+  provider       Provider
+  settings       Json
+  status         ProjectStatus @default(DRAFT)
+  total_jobs     Int           @default(0)
+  completed_jobs Int           @default(0)
+  failed_jobs    Int           @default(0)
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  jobs           Job[]
+
+  @@map("projects")
+}
+
+model Job {
+  id                   String    @id @default(uuid())
+  project_id           String
+  prompt               String
+  status               JobStatus @default(PENDING)
+  progress             Int       @default(0)
+  output_path          String?
+  error_message        String?
+  retry_count          Int       @default(0)
+  vertex_operation_id  String?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  project              Project   @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@map("jobs")
+}
