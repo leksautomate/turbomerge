@@ -9,6 +9,10 @@ async function main() {
   const boss = await getBoss();
   console.log("[worker] pg-boss started");
 
+  // Ensure queues exist before starting workers
+  await boss.createQueue("image-job");
+  await boss.createQueue("video-job");
+
   await boss.work<ImageJobData>("image-job", { localConcurrency: 5 }, async (jobs: Job<ImageJobData>[]) => {
     for (const job of jobs) {
       console.log(`[image-worker] processing job ${job.data.jobId}`);
