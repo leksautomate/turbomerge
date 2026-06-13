@@ -52,6 +52,16 @@ detect_os() {
   ok "Detected OS: $PRETTY_NAME"
 }
 
+update_npm_path() {
+  if command -v npm &>/dev/null; then
+    local npm_prefix
+    npm_prefix=$(npm config get prefix 2>/dev/null || true)
+    if [[ -n "$npm_prefix" ]]; then
+      export PATH="$npm_prefix/bin:$PATH"
+    fi
+  fi
+}
+
 install_system_deps() {
   step "Installing system dependencies"
   apt-get update -qq
@@ -294,8 +304,10 @@ print_summary() {
 banner
 require_root
 detect_os
+update_npm_path
 install_system_deps
 install_node
+update_npm_path
 install_postgres
 install_pm2
 clone_or_update
