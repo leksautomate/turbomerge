@@ -87,12 +87,28 @@ All of these can be set from **Settings** in the app UI, which writes directly t
 
 ## Vertex AI Setup (Imagen + Veo)
 
-Imagen and Veo use Application Default Credentials. Run once on the server:
+Imagen and Veo use Application Default Credentials. Since VPS instances are headless, you can complete the authentication using a local web browser by manually appending the redirect URI:
 
-```bash
-gcloud auth login --no-browser
-gcloud auth application-default login --no-browser
-```
+### 1. User Authentication
+1. Run on the VPS:
+   ```bash
+   gcloud auth login --no-browser
+   ```
+2. Copy the long authentication URL shown in the `--remote-bootstrap="https://..."` command.
+3. Manually append **`&redirect_uri=http://localhost:8085/`** to the very end of that URL.
+4. Paste the combined URL into your local web browser, log in, and grant permissions.
+5. Your browser will redirect to a page that fails to load (e.g. `http://localhost:8085/?state=...&code=...`).
+6. Copy that entire URL from your browser's address bar, paste it back into the VPS terminal prompt, and press **Enter**.
+
+### 2. Application Default Credentials (ADC)
+1. Run on the VPS:
+   ```bash
+   gcloud auth application-default login --no-browser
+   ```
+2. Copy the long authentication URL shown in the `--remote-bootstrap="https://..."` command.
+3. Manually append **`&redirect_uri=http://localhost:8585/`** to the very end of that URL.
+4. Open it in your browser, log in, and copy the redirected address bar URL (e.g. `http://localhost:8585/?state=...&code=...`).
+5. Paste it back into the VPS terminal prompt and press **Enter**.
 
 ---
 
