@@ -1,5 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --font-display: "Cinzel", serif;
+  --font-body: "Source Sans 3", sans-serif;
+
+  --color-background: hsl(220 20% 7%);
+  --color-foreground: hsl(40 15% 90%);
+
+  --color-card: hsl(220 18% 10%);
+  --color-card-foreground: hsl(40 15% 90%);
+
+  --color-primary: hsl(38 55% 55%);
+  --color-primary-foreground: hsl(220 20% 7%);
+
+  --color-secondary: hsl(220 15% 15%);
+  --color-secondary-foreground: hsl(40 15% 80%);
+
+  --color-muted: hsl(220 15% 13%);
+  --color-muted-foreground: hsl(220 10% 50%);
+
+  --color-accent: hsl(38 40% 25%);
+  --color-accent-foreground: hsl(40 15% 90%);
+
+  --color-destructive: hsl(0 65% 50%);
+
+  --color-border: hsl(220 15% 18%);
+  --color-input: hsl(220 15% 18%);
+  --color-ring: hsl(38 55% 55%);
+
+  --color-success: hsl(145 50% 40%);
+  --color-sidebar: hsl(220 18% 8%);
+  --color-sidebar-border: hsl(220 15% 16%);
+
+  --radius: 0.5rem;
+}
+
 :root {
-  --font-geist: "Geist", sans-serif;
+  --gold: hsl(38 55% 55%);
+  --gold-dim: hsl(38 40% 25%);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), serif;
+}
+
+.glow-gold {
+  box-shadow: 0 0 20px hsl(38 55% 55% / 0.15), 0 0 60px hsl(38 55% 55% / 0.05);
 }
