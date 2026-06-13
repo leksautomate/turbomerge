@@ -16,7 +16,7 @@ interface VertexVideoResult {
 
 export async function generateVertexVideo(params: VertexVideoParams): Promise<VertexVideoResult> {
   const project = process.env.VERTEX_PROJECT_ID;
-  const location = process.env.VERTEX_LOCATION ?? "us-central1";
+  const location = process.env.VERTEX_LOCATION ?? process.env.VERTEX_LOCATION_ID ?? "us-central1";
   if (!project) throw new Error("VERTEX_PROJECT_ID is not set");
 
   const ai = new GoogleGenAI({ vertexai: true, project, location });
