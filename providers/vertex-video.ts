@@ -37,7 +37,7 @@ export async function generateVertexVideo(params: VertexVideoParams): Promise<Ve
 
   while (!operation.done) {
     await new Promise((r) => setTimeout(r, pollMs));
-    operation = await ai.operations.get(operation);
+    operation = await (ai.operations as any).get(operation);
   }
 
   const videos = (operation as { result?: { generatedVideos?: Array<{ video?: { uri?: string } }> } }).result?.generatedVideos;

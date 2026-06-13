@@ -34,14 +34,14 @@ export async function generateVertexImage(params: VertexImageParams): Promise<Ve
   });
 
   const parts = response.candidates?.[0]?.content?.parts ?? [];
-  const imagePart = parts.find((p: { inlineData?: { data: string; mimeType: string } }) => p.inlineData?.data);
+  const imagePart = (parts as any[]).find((p: any) => p.inlineData?.data);
 
   if (!imagePart?.inlineData) {
     throw new Error(`Vertex image: no inline image in response`);
   }
 
   return {
-    base64: imagePart.inlineData.data,
-    mimeType: imagePart.inlineData.mimeType,
+    base64: imagePart.inlineData.data as string,
+    mimeType: imagePart.inlineData.mimeType as string,
   };
 }
