@@ -80,10 +80,13 @@ install_postgres() {
     ok "PostgreSQL installed and started"
   fi
 
-  # Create DB and user
+  # Create DB and user (always sync password so DATABASE_URL stays valid on re-runs)
   DB_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 20)
-  sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='turbobatch'" | grep -q 1 || \
+  if sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='turbobatch'" | grep -q 1; then
+    sudo -u postgres psql -c "ALTER USER turbobatch WITH PASSWORD '$DB_PASS';" &>/dev/null
+  else
     sudo -u postgres psql -c "CREATE USER turbobatch WITH PASSWORD '$DB_PASS';" &>/dev/null
+  fi
   sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='turbobatch'" | grep -q 1 || \
     sudo -u postgres psql -c "CREATE DATABASE turbobatch OWNER turbobatch;" &>/dev/null
 
