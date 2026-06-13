@@ -226,13 +226,17 @@ setup_nginx() {
 
   if [[ -n "$DOMAIN" ]]; then
     SERVER_NAME="$DOMAIN"
+    LISTEN_CONF="listen 80;
+    listen [::]:80;"
   else
     SERVER_NAME="_"
+    LISTEN_CONF="listen 80 default_server;
+    listen [::]:80 default_server;"
   fi
 
   cat > /etc/nginx/sites-available/turbobatch <<EOF
 server {
-    listen 80;
+    ${LISTEN_CONF}
     server_name ${SERVER_NAME};
     client_max_body_size 100M;
 
