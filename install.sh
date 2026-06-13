@@ -119,19 +119,20 @@ collect_config() {
   echo -e "${BOLD}Enter your API keys (press Enter to skip optional ones):${RESET}"
   echo ""
 
-  read -rp "  Runware API Key (for GPT Image 2)  [optional]: " RUNWARE_API_KEY
-  read -rp "  Google Cloud Project ID (for Imagen/Veo) [optional]: " VERTEX_PROJECT_ID
-  read -rp "  Vertex AI Location [default: europe-west4]: " VERTEX_LOCATION_ID
+  # All reads use /dev/tty so they work when script is piped via curl | bash
+  read -rp "  Runware API Key (for GPT Image 2)  [optional]: " RUNWARE_API_KEY </dev/tty
+  read -rp "  Google Cloud Project ID (for Imagen/Veo) [optional]: " VERTEX_PROJECT_ID </dev/tty
+  read -rp "  Vertex AI Location [default: europe-west4]: " VERTEX_LOCATION_ID </dev/tty
   VERTEX_LOCATION_ID=${VERTEX_LOCATION_ID:-europe-west4}
-  read -rp "  Image Model [default: imagen-4.0-fast-generate-001]: " IMAGE_MODEL
+  read -rp "  Image Model [default: imagen-4.0-fast-generate-001]: " IMAGE_MODEL </dev/tty
   IMAGE_MODEL=${IMAGE_MODEL:-imagen-4.0-fast-generate-001}
-  read -rp "  Default Aspect Ratio (16:9 / 1:1 / 9:16) [default: 16:9]: " IMAGE_ASPECT_RATIO
+  read -rp "  Default Aspect Ratio (16:9 / 1:1 / 9:16) [default: 16:9]: " IMAGE_ASPECT_RATIO </dev/tty
   IMAGE_ASPECT_RATIO=${IMAGE_ASPECT_RATIO:-16:9}
-  read -rp "  Veo Model [default: veo-3.1-lite-generate-001]: " VEO_MODEL_ID
+  read -rp "  Veo Model [default: veo-3.1-lite-generate-001]: " VEO_MODEL_ID </dev/tty
   VEO_MODEL_ID=${VEO_MODEL_ID:-veo-3.1-lite-generate-001}
-  read -rp "  App Port [default: 3000]: " APP_PORT_INPUT
+  read -rp "  App Port [default: 3000]: " APP_PORT_INPUT </dev/tty
   APP_PORT=${APP_PORT_INPUT:-3000}
-  read -rp "  Domain name (e.g. turbobatch.example.com, or leave blank for IP only): " DOMAIN
+  read -rp "  Domain name (e.g. turbobatch.example.com, or leave blank for IP only): " DOMAIN </dev/tty
   echo ""
 }
 
